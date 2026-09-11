@@ -8,10 +8,11 @@ export const siteConfig = {
     catalogs: "/catalogs",
     transactions: "/transactions",
     settings: "/settings",
+    producers: "/producers",
     integrations: "/settings/integrations",
     webhooks: "/settings/webhooks",
     login: "/login",
   },
-}
+};
 
-export type siteConfig = typeof siteConfig
+export type siteConfig = typeof siteConfig;

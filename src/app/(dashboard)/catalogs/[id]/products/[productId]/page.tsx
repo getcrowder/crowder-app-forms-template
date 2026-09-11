@@ -1,29 +1,35 @@
-import { notFound } from "next/navigation"
+import { notFound } from "next/navigation";
 
-import { getCatalog, getProduct, listCollections } from "@/modules/catalogs"
-import { getConfig } from "@/modules/partner-config"
+import { getCatalog, getProduct, listCollections } from "@/modules/catalogs";
+import { getConfig } from "@/modules/partner-config";
 
-import { ProductEditor } from "../_components/ProductEditor"
+import { ProductEditor } from "../_components/ProductEditor";
 
-export const dynamic = "force-dynamic"
+export const dynamic = "force-dynamic";
 
 export default async function ProductPage({
   params,
 }: {
-  params: Promise<{ id: string; productId: string }>
+  params: Promise<{ id: string; productId: string }>;
 }) {
-  const { id, productId } = await params
-  let catalog
-  let product
+  const { id, productId } = await params;
+  let catalog;
+  let product;
   try {
-    ;[catalog, product] = await Promise.all([getCatalog(id), getProduct(productId)])
+    [catalog, product] = await Promise.all([
+      getCatalog(id),
+      getProduct(productId),
+    ]);
   } catch {
-    notFound()
+    notFound();
   }
   // El producto debe pertenecer al catálogo de la URL.
-  if (product.catalogId !== id) notFound()
+  if (product.catalogId !== id) notFound();
 
-  const [collections, cfg] = await Promise.all([listCollections(id), getConfig()])
+  const [collections, cfg] = await Promise.all([
+    listCollections(id),
+    getConfig(),
+  ]);
 
   return (
     <ProductEditor
@@ -44,11 +50,12 @@ export default async function ProductPage({
         images: product.images ?? [],
         imageUrl: product.imageUrl,
         refundable: product.refundable,
+        serviceFee: product.serviceFee,
         externalId: product.externalId,
         variants: product.variants,
         collectionIds: product.collectionIds,
       }}
       readOnly={catalog.source !== "manual"}
     />
-  )
+  );
 }

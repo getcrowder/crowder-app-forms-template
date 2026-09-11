@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { siteConfig } from "@/app/siteConfig"
-import { cx, focusRing } from "@/lib/utils"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Logo } from "../../../public/Logo"
-import { DropdownUserProfile } from "./UserProfile"
+import { siteConfig } from "@/app/siteConfig";
+import { cx, focusRing } from "@/lib/utils";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Logo } from "../../../public/Logo";
+import { DropdownUserProfile } from "./UserProfile";
 
 const navItems = [
   { href: siteConfig.baseLinks.overview, label: "Resumen" },
@@ -13,15 +13,16 @@ const navItems = [
   { href: siteConfig.baseLinks.catalogs, label: "Catálogos" },
   { href: siteConfig.baseLinks.transactions, label: "Transacciones" },
   { href: siteConfig.baseLinks.settings, label: "Configuración" },
-]
+  { href: siteConfig.baseLinks.producers, label: "Productores" },
+];
 
 function isActive(pathname: string, href: string) {
-  if (href === "/") return pathname === "/"
-  return pathname === href || pathname.startsWith(href + "/")
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(href + "/");
 }
 
 function Navigation() {
-  const pathname = usePathname()
+  const pathname = usePathname();
   return (
     <div className="shadow-s sticky top-0 z-20 bg-background">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 pt-3">
@@ -36,7 +37,7 @@ function Navigation() {
       <nav className="mt-5 border-b border-border">
         <ul className="mx-auto flex w-full max-w-7xl items-center px-6">
           {navItems.map((it) => {
-            const active = isActive(pathname, it.href)
+            const active = isActive(pathname, it.href);
             return (
               <li key={it.href} className="flex">
                 <Link
@@ -53,12 +54,12 @@ function Navigation() {
                   {it.label}
                 </Link>
               </li>
-            )
+            );
           })}
         </ul>
       </nav>
     </div>
-  )
+  );
 }
 
-export { Navigation }
+export { Navigation };

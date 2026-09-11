@@ -1,42 +1,44 @@
-import { notFound } from "next/navigation"
+import { notFound } from "next/navigation";
 
-import { findPublished } from "@/modules/forms"
-import { getConfig } from "@/modules/partner-config"
-import { resolveListing, toRenderProduct } from "@/modules/catalogs"
-import { EmbedWizard } from "@/components/embed/EmbedWizard"
-import type { ProductLists } from "@/lib/products/types"
-import { resolveAllowedOrigins } from "@/lib/origins"
-import { embedThemeStyle } from "@/lib/theme"
+import { findPublished } from "@/modules/forms";
+import { getConfig } from "@/modules/partner-config";
+import { resolveListing, toRenderProduct } from "@/modules/catalogs";
+import { EmbedWizard } from "@/components/embed/EmbedWizard";
+import type { ProductLists } from "@/lib/products/types";
+import { resolveAllowedOrigins } from "@/lib/origins";
+import { embedThemeStyle } from "@/lib/theme";
 
-export const dynamic = "force-dynamic"
+export const dynamic = "force-dynamic";
 
 export default async function EmbedFormPage({
   params,
 }: {
-  params: Promise<{ formId: string }>
+  params: Promise<{ formId: string }>;
 }) {
-  const { formId } = await params
-  const [published, cfg] = await Promise.all([findPublished(formId), getConfig()])
+  const { formId } = await params;
+  const [published, cfg] = await Promise.all([
+    findPublished(formId),
+    getConfig(),
+  ]);
 
-  if (!published) notFound()
+  if (!published) notFound();
 
   // Resolver el listado de cada pregunta `product` (definition sección 8): la
   // pregunta nunca habla con Shopify en render, lee del catálogo local. Las
   // listas viajan al wizard como render-safe, clave `${formId}::${questionId}`.
-  const productLists: ProductLists = {}
-  const productQuestions = published.version.definition.groups.flatMap((group) =>
-    group.questions.filter((q) => q.type === "product" && q.product),
-  )
+  const productLists: ProductLists = {};
+  const productQuestions = published.version.definition.groups.flatMap(
+    (group) => group.questions.filter((q) => q.type === "product" && q.product),
+  );
   const resolved = await Promise.all(
     productQuestions.map((q) => resolveListing(q.product!)),
-  )
+  );
   productQuestions.forEach((q, i) => {
-    productLists[`${published.form.id}::${q.id}`] = resolved[i].map(toRenderProduct)
-  })
+    productLists[`${published.form.id}::${q.id}`] =
+      resolved[i].map(toRenderProduct);
+  });
 
-  const themeCss = embedThemeStyle(
-    published.form.theme ?? cfg?.theme ?? null,
-  )
+  const themeCss = embedThemeStyle(published.form.theme ?? cfg?.theme ?? null);
 
   return (
     <main
@@ -62,5 +64,5 @@ export default async function EmbedFormPage({
         formIdForDiagnostics={published.form.id}
       />
     </main>
-  )
+  );
 }

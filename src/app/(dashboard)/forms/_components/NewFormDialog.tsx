@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { RiAddLine } from "@remixicon/react"
-import { useActionState, useState } from "react"
+import { RiAddLine } from "@remixicon/react";
+import { useActionState, useState } from "react";
 
-import { Button } from "@/components/Button"
+import { Button } from "@/components/Button";
 import {
   Dialog,
   DialogContent,
@@ -12,18 +12,25 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/Dialog"
-import { Input } from "@/components/Input"
-import { Label } from "@/components/Label"
+} from "@/components/Dialog";
+import { Input } from "@/components/Input";
+import { Label } from "@/components/Label";
 
-import { createFormAction, type ActionResult } from "../actions"
+import { createFormAction, type ActionResult } from "../actions";
 
-export function NewFormDialog() {
-  const [open, setOpen] = useState(false)
-  const [state, formAction, pending] = useActionState<ActionResult | null, FormData>(
-    createFormAction,
-    null,
-  )
+type NewFormDialogProps = {
+  producers: {
+    id: string;
+    razon_social: string;
+  }[];
+};
+
+export function NewFormDialog({ producers }: NewFormDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [state, formAction, pending] = useActionState<
+    ActionResult | null,
+    FormData
+  >(createFormAction, null);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -54,9 +61,30 @@ export function NewFormDialog() {
                 El slug (ID) se genera automáticamente a partir del título.
               </p>
               {state?.fieldErrors?.title && (
-                <p className="text-xs text-destructive">{state.fieldErrors.title}</p>
+                <p className="text-xs text-destructive">
+                  {state.fieldErrors.title}
+                </p>
               )}
             </div>
+
+            {/* NUEVO CAMPO PRODUCTOR */}
+            <div className="space-y-2">
+              <Label htmlFor="producer_id">Productor</Label> 
+              <select
+                id="producer_id"
+                name="producer_id"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+              >
+                <option value="">Seleccione un productor</option>
+
+                {producers.map((producer) => (
+                  <option key={producer.id} value={producer.id}>
+                    {producer.razon_social}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {state?.ok === false && !state.fieldErrors && (
               <p className="text-sm text-destructive">{state.error}</p>
             )}
@@ -77,5 +105,5 @@ export function NewFormDialog() {
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -1,48 +1,48 @@
-import { RiArrowLeftLine } from "@remixicon/react"
-import { headers } from "next/headers"
-import Link from "next/link"
-import { notFound } from "next/navigation"
+import { RiArrowLeftLine } from "@remixicon/react";
+import { headers } from "next/headers";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
-import { TabNav } from "@/components/dashboard/TabNav"
-import { getForm, listVersions } from "@/modules/forms"
-import type { FormVersion } from "@/modules/forms"
-import { listCatalogs, listCollectionsForCatalogs } from "@/modules/catalogs"
-import { getConfig } from "@/modules/partner-config"
-import { DomainError } from "@/lib/errors"
-import { DEFAULT_BRAND_HEX } from "@/lib/theme"
+import { TabNav } from "@/components/dashboard/TabNav";
+import { getForm, listVersions } from "@/modules/forms";
+import type { FormVersion } from "@/modules/forms";
+import { listCatalogs, listCollectionsForCatalogs } from "@/modules/catalogs";
+import { getConfig } from "@/modules/partner-config";
+import { DomainError } from "@/lib/errors";
+import { DEFAULT_BRAND_HEX } from "@/lib/theme";
 
-import { BrandCard } from "./_components/BrandCard"
-import { EmbedCard } from "./_components/EmbedCard"
-import { FormEditor } from "./_components/FormEditor"
+import { BrandCard } from "./_components/BrandCard";
+import { EmbedCard } from "./_components/EmbedCard";
+import { FormEditor } from "./_components/FormEditor";
 
-export const dynamic = "force-dynamic"
+export const dynamic = "force-dynamic";
 
 export default async function FormDetailPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ id: string }>
-  searchParams: Promise<{ tab?: string }>
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
-  const [{ id }, { tab: tabParam }] = await Promise.all([params, searchParams])
+  const [{ id }, { tab: tabParam }] = await Promise.all([params, searchParams]);
   const tab: "editor" | "integration" | "appearance" =
     tabParam === "integration" || tabParam === "appearance"
       ? tabParam
-      : "editor"
+      : "editor";
 
-  let form, versions, cfg, catalogs
+  let form, versions, cfg, catalogs;
   try {
-    ;[form, versions, cfg, catalogs] = await Promise.all([
+    [form, versions, cfg, catalogs] = await Promise.all([
       getForm(id),
       tab === "editor" ? listVersions(id) : Promise.resolve<FormVersion[]>([]),
       tab === "appearance" || tab === "integration"
         ? getConfig()
         : Promise.resolve(null),
       tab === "editor" ? listCatalogs() : Promise.resolve([]),
-    ])
+    ]);
   } catch (err) {
-    if (err instanceof DomainError && err.code === "not_found") notFound()
-    throw err
+    if (err instanceof DomainError && err.code === "not_found") notFound();
+    throw err;
   }
 
   // Catálogos con sus colecciones para el builder de la pregunta `product`
@@ -50,22 +50,22 @@ export default async function FormDetailPage({
   // Una sola query trae todas las colecciones; las agrupamos por catálogo acá.
   const allCollections = await listCollectionsForCatalogs(
     catalogs.map((c) => c.id),
-  )
+  );
   const catalogOptions = catalogs.map((c) => ({
     id: c.id,
     title: c.title,
     collections: allCollections
       .filter((col) => col.catalogId === c.id)
       .map((col) => ({ id: col.id, title: col.title })),
-  }))
+  }));
 
-  const h = await headers()
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000"
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
   const proto =
     h.get("x-forwarded-proto") ??
-    (host.startsWith("localhost") ? "http" : "https")
-  const baseUrl = `${proto}://${host}`
-  const embedUrl = `${baseUrl}/embed/${form.id}`
+    (host.startsWith("localhost") ? "http" : "https");
+  const baseUrl = `${proto}://${host}`;
+  const embedUrl = `${baseUrl}/embed/${form.id}`;
 
   const tabs = [
     { key: "editor", label: "Editor", href: `/forms/${form.id}` },
@@ -79,7 +79,7 @@ export default async function FormDetailPage({
       label: "Apariencia",
       href: `/forms/${form.id}?tab=appearance`,
     },
-  ]
+  ];
 
   return (
     <main className="space-y-4">
@@ -127,5 +127,5 @@ export default async function FormDetailPage({
         />
       )}
     </main>
-  )
+  );
 }

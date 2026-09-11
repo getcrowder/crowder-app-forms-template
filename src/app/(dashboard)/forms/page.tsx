@@ -1,12 +1,12 @@
-import Link from "next/link"
-import { RiCloseLine, RiFileList3Line, RiFilterLine } from "@remixicon/react"
+import Link from "next/link";
+import { RiCloseLine, RiFileList3Line, RiFilterLine } from "@remixicon/react";
 
-import { Badge } from "@/components/Badge"
-import { Button } from "@/components/Button"
-import { Card } from "@/components/Card"
-import { EmptyState } from "@/components/EmptyState"
-import { Input } from "@/components/Input"
-import { Pagination } from "@/components/dashboard/Pagination"
+import { Badge } from "@/components/Badge";
+import { Button } from "@/components/Button";
+import { Card } from "@/components/Card";
+import { EmptyState } from "@/components/EmptyState";
+import { Input } from "@/components/Input";
+import { Pagination } from "@/components/dashboard/Pagination";
 import {
   Table,
   TableBody,
@@ -15,56 +15,54 @@ import {
   TableHeaderCell,
   TableRoot,
   TableRow,
-} from "@/components/Table"
-import {
-  countForms,
-  listForms,
-  type FormListStatus,
-} from "@/modules/forms"
-import { DateTime } from "@/components/DateTime"
+} from "@/components/Table";
+import { countForms, listForms, type FormListStatus } from "@/modules/forms";
+import { listProducers } from "@/modules/producers";
+import { DateTime } from "@/components/DateTime";
 import {
   buildListQuery,
   parsePageParam,
   parseStatusParam,
-} from "@/lib/list-query"
-import { time, timer } from "@/lib/timing"
+} from "@/lib/list-query";
+import { time, timer } from "@/lib/timing";
 
-import { NewFormDialog } from "./_components/NewFormDialog"
+import { NewFormDialog } from "./_components/NewFormDialog";
 
-export const dynamic = "force-dynamic"
+export const dynamic = "force-dynamic";
 
-const PAGE_SIZE = 50
+const PAGE_SIZE = 50;
 
-const ALL_STATUSES: FormListStatus[] = ["published", "draft", "archived"]
+const ALL_STATUSES: FormListStatus[] = ["published", "draft", "archived"];
 
 const STATUS_LABELS: Record<FormListStatus, string> = {
   published: "Publicados",
   draft: "Borradores",
   archived: "Archivados",
-}
+};
 
 export default async function FormsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; page?: string }>
+  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
 }) {
-  const sp = await searchParams
-  const q = sp.q?.trim() || undefined
-  const status = parseStatusParam(sp.status, ALL_STATUSES)
-  const pageNum = parsePageParam(sp.page)
-  const offset = (pageNum - 1) * PAGE_SIZE
+  const sp = await searchParams;
+  const q = sp.q?.trim() || undefined;
+  const status = parseStatusParam(sp.status, ALL_STATUSES);
+  const pageNum = parsePageParam(sp.page);
+  const offset = (pageNum - 1) * PAGE_SIZE;
 
-  const total = timer("page Forms total")
-  const filters = { search: q, status }
-  const [forms, formsTotal] = await Promise.all([
+  const total = timer("page Forms total");
+  const filters = { search: q, status };
+  const [forms, formsTotal, producers] = await Promise.all([
     time("listForms", () =>
       listForms({ ...filters, limit: PAGE_SIZE, offset }),
     ),
     time("countForms", () => countForms(filters)),
-  ])
-  total()
+    listProducers(),
+  ]);
+  total();
 
-  const filtersActive = !!(q || status)
+  const filtersActive = !!(q || status);
 
   return (
     <main>
@@ -74,10 +72,11 @@ export default async function FormsPage({
             Formularios
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Listado y gestión de formularios expuestos en el iframe del checkout.
+            Listado y gestión de formularios expuestos en el iframe del
+            checkout.
           </p>
         </div>
-        <NewFormDialog />
+        <NewFormDialog producers={producers} />
       </div>
 
       <Card className="mb-4 bg-background">
@@ -126,7 +125,8 @@ export default async function FormsPage({
             icon={RiFileList3Line}
             title="Aún no creaste ningún formulario"
           >
-            Cuando publiques uno, aparecerá embebido en el checkout de la ticketera.
+            Cuando publiques uno, aparecerá embebido en el checkout de la
+            ticketera.
           </EmptyState>
         )
       ) : (
@@ -137,6 +137,7 @@ export default async function FormsPage({
                 <TableHead>
                   <TableRow>
                     <TableHeaderCell>Título</TableHeaderCell>
+                    <TableHeaderCell>Productor</TableHeaderCell>
                     <TableHeaderCell>Grupos</TableHeaderCell>
                     <TableHeaderCell>Estado</TableHeaderCell>
                     <TableHeaderCell>Actualizado</TableHeaderCell>
@@ -157,10 +158,12 @@ export default async function FormsPage({
                           {f.id}
                         </p>
                       </TableCell>
+                      <TableCell>{f.producerName ?? "-"}</TableCell>
                       <TableCell className="text-secondary-foreground tabular-nums">
                         {f.groupCount}
                         <span className="ml-2 text-xs text-muted-foreground">
-                          ({f.transactionGroupCount} tx · {f.itemGroupCount} item)
+                          ({f.transactionGroupCount} tx · {f.itemGroupCount}{" "}
+                          item)
                         </span>
                       </TableCell>
                       <TableCell>
@@ -206,5 +209,5 @@ export default async function FormsPage({
         </>
       )}
     </main>
-  )
+  );
 }

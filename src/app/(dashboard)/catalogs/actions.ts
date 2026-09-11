@@ -1,16 +1,16 @@
-"use server"
+"use server";
 
-import { revalidatePath } from "next/cache"
-import { z } from "zod"
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
-import { getServiceSupabase, requireUser } from "@/adapters/supabase/server"
-import { type ActionResult, fail } from "@/lib/action-result"
+import { getServiceSupabase, requireUser } from "@/adapters/supabase/server";
+import { type ActionResult, fail } from "@/lib/action-result";
 import type {
   CatalogSource,
   ProductOption,
   ProductStatus,
   ProductVariant,
-} from "@/lib/db/schema"
+} from "@/lib/db/schema";
 import {
   createCatalog as createCatalogSvc,
   createCollection as createCollectionSvc,
@@ -22,25 +22,25 @@ import {
   updateCatalog as updateCatalogSvc,
   updateCollection as updateCollectionSvc,
   updateProduct as updateProductSvc,
-} from "@/modules/catalogs"
-import { syncCatalog } from "@/modules/integrations"
-import { getFormsByIds, listForms } from "@/modules/forms"
+} from "@/modules/catalogs";
+import { syncCatalog } from "@/modules/integrations";
+import { getFormsByIds, listForms } from "@/modules/forms";
 
 // ─── catálogos ──────────────────────────────────────────────────────────────
 
 export async function createCatalog(input: {
-  title: string
-  source: CatalogSource
-  credentialId?: string | null
-  currency?: string | null
+  title: string;
+  source: CatalogSource;
+  credentialId?: string | null;
+  currency?: string | null;
 }): Promise<ActionResult<string>> {
-  await requireUser()
+  await requireUser();
   try {
-    const cat = await createCatalogSvc(input)
-    revalidatePath("/catalogs")
-    return { ok: true, value: cat.id }
+    const cat = await createCatalogSvc(input);
+    revalidatePath("/catalogs");
+    return { ok: true, value: cat.id };
   } catch (err) {
-    return fail(err)
+    return fail(err);
   }
 }
 
@@ -48,14 +48,14 @@ export async function updateCatalog(
   id: string,
   patch: { title?: string; currency?: string | null },
 ): Promise<ActionResult> {
-  await requireUser()
+  await requireUser();
   try {
-    await updateCatalogSvc(id, patch)
-    revalidatePath(`/catalogs/${id}`)
-    revalidatePath("/catalogs")
-    return { ok: true }
+    await updateCatalogSvc(id, patch);
+    revalidatePath(`/catalogs/${id}`);
+    revalidatePath("/catalogs");
+    return { ok: true };
   } catch (err) {
-    return fail(err)
+    return fail(err);
   }
 }
 
@@ -66,61 +66,63 @@ export async function updateCatalog(
 async function catalogReferencedByPublishedForm(
   catalogId: string,
 ): Promise<string | null> {
-  const published = (await listForms()).filter((f) => f.publishedAt)
-  const full = await getFormsByIds(published.map((f) => f.id))
+  const published = (await listForms()).filter((f) => f.publishedAt);
+  const full = await getFormsByIds(published.map((f) => f.id));
   const hit = full.find((form) =>
     form.definition.groups.some((g) =>
       g.questions.some(
         (q) => q.type === "product" && q.product?.catalogId === catalogId,
       ),
     ),
-  )
-  return hit?.id ?? null
+  );
+  return hit?.id ?? null;
 }
 
 export async function deleteCatalog(id: string): Promise<ActionResult> {
-  await requireUser()
+  await requireUser();
   try {
-    const ref = await catalogReferencedByPublishedForm(id)
+    const ref = await catalogReferencedByPublishedForm(id);
     if (ref)
       return {
         ok: false,
         error: `No se puede eliminar: el form publicado '${ref}' usa este catálogo. Quitá la pregunta o despublicá el form primero.`,
-      }
-    await deleteCatalogSvc(id)
-    revalidatePath("/catalogs")
-    return { ok: true }
+      };
+    await deleteCatalogSvc(id);
+    revalidatePath("/catalogs");
+    return { ok: true };
   } catch (err) {
-    return fail(err)
+    return fail(err);
   }
 }
 
-export async function runSync(catalogId: string): Promise<
+export async function runSync(
+  catalogId: string,
+): Promise<
   ActionResult<{ status: string; counts: unknown; errors: string[] }>
 > {
-  await requireUser()
+  await requireUser();
   try {
-    const res = await syncCatalog(catalogId)
-    revalidatePath(`/catalogs/${catalogId}`)
-    return { ok: true, value: res }
+    const res = await syncCatalog(catalogId);
+    revalidatePath(`/catalogs/${catalogId}`);
+    return { ok: true, value: res };
   } catch (err) {
-    return fail(err)
+    return fail(err);
   }
 }
 
 // ─── colecciones ──────────────────────────────────────────────────────────
 
 export async function createCollection(input: {
-  catalogId: string
-  title: string
+  catalogId: string;
+  title: string;
 }): Promise<ActionResult> {
-  await requireUser()
+  await requireUser();
   try {
-    await createCollectionSvc(input)
-    revalidatePath(`/catalogs/${input.catalogId}`)
-    return { ok: true }
+    await createCollectionSvc(input);
+    revalidatePath(`/catalogs/${input.catalogId}`);
+    return { ok: true };
   } catch (err) {
-    return fail(err)
+    return fail(err);
   }
 }
 
@@ -129,13 +131,13 @@ export async function updateCollection(
   catalogId: string,
   patch: { title?: string; position?: number },
 ): Promise<ActionResult> {
-  await requireUser()
+  await requireUser();
   try {
-    await updateCollectionSvc(id, patch)
-    revalidatePath(`/catalogs/${catalogId}`)
-    return { ok: true }
+    await updateCollectionSvc(id, patch);
+    revalidatePath(`/catalogs/${catalogId}`);
+    return { ok: true };
   } catch (err) {
-    return fail(err)
+    return fail(err);
   }
 }
 
@@ -143,41 +145,42 @@ export async function deleteCollection(
   id: string,
   catalogId: string,
 ): Promise<ActionResult> {
-  await requireUser()
+  await requireUser();
   try {
-    await deleteCollectionSvc(id)
-    revalidatePath(`/catalogs/${catalogId}`)
-    return { ok: true }
+    await deleteCollectionSvc(id);
+    revalidatePath(`/catalogs/${catalogId}`);
+    return { ok: true };
   } catch (err) {
-    return fail(err)
+    return fail(err);
   }
 }
 
 // ─── productos (manual) ─────────────────────────────────────────────────────
 
 export type ProductInput = {
-  title: string
-  currency?: string | null
-  images?: string[]
-  imageUrl?: string | null
-  status?: ProductStatus
-  refundable?: boolean
-  options?: ProductOption[] | null
-  variants?: Partial<ProductVariant>[]
-  collectionIds?: string[]
-}
+  title: string;
+  currency?: string | null;
+  images?: string[];
+  imageUrl?: string | null;
+  status?: ProductStatus;
+  refundable?: boolean;
+  serviceFee?: number;
+  options?: ProductOption[] | null;
+  variants?: Partial<ProductVariant>[];
+  collectionIds?: string[];
+};
 
 export async function createProduct(
   catalogId: string,
   input: ProductInput,
 ): Promise<ActionResult<string>> {
-  await requireUser()
+  await requireUser();
   try {
-    const p = await createProductSvc({ catalogId, ...input })
-    revalidatePath(`/catalogs/${catalogId}`)
-    return { ok: true, value: p.id }
+    const p = await createProductSvc({ catalogId, ...input });
+    revalidatePath(`/catalogs/${catalogId}`);
+    return { ok: true, value: p.id };
   } catch (err) {
-    return fail(err)
+    return fail(err);
   }
 }
 
@@ -186,13 +189,13 @@ export async function updateProduct(
   catalogId: string,
   input: ProductInput,
 ): Promise<ActionResult> {
-  await requireUser()
+  await requireUser();
   try {
-    await updateProductSvc(id, input)
-    revalidatePath(`/catalogs/${catalogId}`)
-    return { ok: true }
+    await updateProductSvc(id, input);
+    revalidatePath(`/catalogs/${catalogId}`);
+    return { ok: true };
   } catch (err) {
-    return fail(err)
+    return fail(err);
   }
 }
 
@@ -204,13 +207,13 @@ export async function setCollectionProducts(
   catalogId: string,
   productIds: string[],
 ): Promise<ActionResult> {
-  await requireUser()
+  await requireUser();
   try {
-    await setCollectionMembershipSvc(catalogId, collectionId, productIds)
-    revalidatePath(`/catalogs/${catalogId}`)
-    return { ok: true }
+    await setCollectionMembershipSvc(catalogId, collectionId, productIds);
+    revalidatePath(`/catalogs/${catalogId}`);
+    return { ok: true };
   } catch (err) {
-    return fail(err)
+    return fail(err);
   }
 }
 
@@ -218,24 +221,29 @@ export async function deleteProduct(
   id: string,
   catalogId: string,
 ): Promise<ActionResult> {
-  await requireUser()
+  await requireUser();
   try {
-    await deleteProductSvc(id)
-    revalidatePath(`/catalogs/${catalogId}`)
-    return { ok: true }
+    await deleteProductSvc(id);
+    revalidatePath(`/catalogs/${catalogId}`);
+    return { ok: true };
   } catch (err) {
-    return fail(err)
+    return fail(err);
   }
 }
 
 // ─── subida de imagen de producto (Supabase Storage) ───────────────────────
 
-const IMAGE_BUCKET = "product-images"
+const IMAGE_BUCKET = "product-images";
 // Backstop: el cliente ya reescala y comprime a WebP (~30–120 KB) vía
 // prepareProductImage, así que un upload normal nunca se acerca. Estos 3 MB
 // solo protegen contra una llamada directa a la action.
-const MAX_IMAGE_BYTES = 3 * 1024 * 1024
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"]
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
 
 // Sube una imagen al bucket público `product-images` y devuelve su URL pública
 // (definition sección 10.2). Usa el cliente service-role: crea el bucket si falta y
@@ -243,35 +251,45 @@ const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif
 export async function uploadProductImage(
   formData: FormData,
 ): Promise<ActionResult<{ url: string }>> {
-  await requireUser()
+  await requireUser();
   try {
-    const file = formData.get("file")
+    const file = formData.get("file");
     if (!(file instanceof File)) {
-      return { ok: false, error: "No se recibió ningún archivo" }
+      return { ok: false, error: "No se recibió ningún archivo" };
     }
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      return { ok: false, error: "Formato no soportado (usá JPG, PNG, WebP o GIF)" }
+      return {
+        ok: false,
+        error: "Formato no soportado (usá JPG, PNG, WebP o GIF)",
+      };
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      return { ok: false, error: "La imagen supera los 3 MB" }
+      return { ok: false, error: "La imagen supera los 3 MB" };
     }
 
-    const supabase = getServiceSupabase()
+    const supabase = getServiceSupabase();
     // Crea el bucket público si todavía no existe (idempotente).
-    await supabase.storage.createBucket(IMAGE_BUCKET, { public: true }).catch(() => {})
+    await supabase.storage
+      .createBucket(IMAGE_BUCKET, { public: true })
+      .catch(() => {});
 
-    const ext = file.name.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "") || "bin"
-    const path = `${crypto.randomUUID()}.${ext}`
+    const ext =
+      file.name
+        .split(".")
+        .pop()
+        ?.toLowerCase()
+        .replace(/[^a-z0-9]/g, "") || "bin";
+    const path = `${crypto.randomUUID()}.${ext}`;
     const { error: uploadErr } = await supabase.storage
       .from(IMAGE_BUCKET)
-      .upload(path, file, { contentType: file.type, upsert: false })
+      .upload(path, file, { contentType: file.type, upsert: false });
     if (uploadErr) {
-      return { ok: false, error: `No se pudo subir: ${uploadErr.message}` }
+      return { ok: false, error: `No se pudo subir: ${uploadErr.message}` };
     }
-    const { data } = supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path)
-    return { ok: true, value: { url: data.publicUrl } }
+    const { data } = supabase.storage.from(IMAGE_BUCKET).getPublicUrl(path);
+    return { ok: true, value: { url: data.publicUrl } };
   } catch (err) {
-    return fail(err)
+    return fail(err);
   }
 }
 
@@ -290,7 +308,7 @@ const variantImportSchema = z
     stock: z.number().nullable().optional(),
     oversellPolicy: z.enum(["deny", "continue"]).optional(),
   })
-  .strip()
+  .strip();
 
 const productImportSchema = z.object({
   title: z.string().min(1),
@@ -305,9 +323,9 @@ const productImportSchema = z.object({
     .optional(),
   variants: z.array(variantImportSchema).optional(),
   collectionIds: z.array(z.string()).optional(),
-})
+});
 
-const productsImportSchema = z.array(productImportSchema)
+const productsImportSchema = z.array(productImportSchema);
 
 // Crea productos en masa desde un JSON (array de productos, mismo shape que el
 // export). Aditivo: agrega los del archivo, no reemplaza. Solo catálogos manuales.
@@ -315,29 +333,29 @@ export async function importProducts(
   catalogId: string,
   raw: unknown,
 ): Promise<ActionResult<{ created: number; failed: number }>> {
-  await requireUser()
+  await requireUser();
   try {
-    const parsed = productsImportSchema.safeParse(raw)
+    const parsed = productsImportSchema.safeParse(raw);
     if (!parsed.success) {
-      const first = parsed.error.issues[0]
+      const first = parsed.error.issues[0];
       return {
         ok: false,
         error: `JSON inválido${first ? `: ${first.path.join(".")} ${first.message}` : ""}`,
-      }
+      };
     }
-    let created = 0
-    let failed = 0
+    let created = 0;
+    let failed = 0;
     for (const item of parsed.data) {
       try {
-        await createProductSvc({ catalogId, ...item })
-        created++
+        await createProductSvc({ catalogId, ...item });
+        created++;
       } catch {
-        failed++
+        failed++;
       }
     }
-    revalidatePath(`/catalogs/${catalogId}`)
-    return { ok: true, value: { created, failed } }
+    revalidatePath(`/catalogs/${catalogId}`);
+    return { ok: true, value: { created, failed } };
   } catch (err) {
-    return fail(err)
+    return fail(err);
   }
 }
