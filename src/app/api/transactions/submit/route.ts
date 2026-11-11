@@ -74,7 +74,7 @@ const submissionSchema = z.object({
   scope: z.enum(["transaction", "item"]),
   itemUuid: z.string().nullable().optional(),
   answers: z
-    .record(z.unknown())
+    .record(z.string(), z.unknown())
     .refine((a) => Object.keys(a).length <= MAX_ANSWER_KEYS, {
       message: `too many answer keys (max ${MAX_ANSWER_KEYS})`,
     }),

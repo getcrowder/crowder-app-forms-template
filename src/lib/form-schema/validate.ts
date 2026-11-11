@@ -95,10 +95,7 @@ function baseSchemaForType(q: FormQuestion, ticketCount?: number): ZodTypeAny {
     case "long_text":
     case "country":
     case "document_id": {
-      let s = z.string({
-        required_error: requiredMsg,
-        invalid_type_error: requiredMsg,
-      })
+      let s = z.string({ error: requiredMsg })
       if (v.min != null)
         s = s.min(
           v.min,
@@ -116,10 +113,7 @@ function baseSchemaForType(q: FormQuestion, ticketCount?: number): ZodTypeAny {
     }
     case "email": {
       let s = z
-        .string({
-          required_error: requiredMsg,
-          invalid_type_error: requiredMsg,
-        })
+        .string({ error: requiredMsg })
         .email(msg ?? "Email inválido")
       if (v.max != null)
         s = s.max(v.max, msg ?? `Máximo ${v.max} caracteres`)
@@ -128,20 +122,14 @@ function baseSchemaForType(q: FormQuestion, ticketCount?: number): ZodTypeAny {
     }
     case "phone": {
       let s = z
-        .string({
-          required_error: requiredMsg,
-          invalid_type_error: requiredMsg,
-        })
+        .string({ error: requiredMsg })
         .regex(/^[+\d][\d\s\-()]{4,}$/, msg ?? "Teléfono inválido")
       if (v.pattern)
         s = s.regex(new RegExp(v.pattern), msg ?? "Teléfono inválido")
       return s
     }
     case "number": {
-      let s = z.number({
-        required_error: requiredMsg,
-        invalid_type_error: requiredMsg,
-      })
+      let s = z.number({ error: requiredMsg })
       if (v.min != null) s = s.min(v.min, msg ?? `Mínimo ${v.min}`)
       if (v.max != null) s = s.max(v.max, msg ?? `Máximo ${v.max}`)
       return s
@@ -150,22 +138,16 @@ function baseSchemaForType(q: FormQuestion, ticketCount?: number): ZodTypeAny {
     case "dropdown": {
       const values = (q.options ?? []).map((o) => o.value) as [string, ...string[]]
       if (values.length === 0)
-        return z.string({
-          required_error: requiredMsg,
-          invalid_type_error: requiredMsg,
-        })
+        return z.string({ error: requiredMsg })
       return z.enum(values, {
-        errorMap: () => ({ message: requiredMsg }),
+        error: requiredMsg,
       })
     }
     case "multiple_choice": {
       const values = (q.options ?? []).map((o) => o.value)
       const valueSet = new Set(values)
       const base = z
-        .array(z.string(), {
-          required_error: requiredMsg,
-          invalid_type_error: requiredMsg,
-        })
+        .array(z.string(), { error: requiredMsg })
         .superRefine((arr, ctx) => {
           for (const v of arr) {
             if (!valueSet.has(v)) {
@@ -182,36 +164,24 @@ function baseSchemaForType(q: FormQuestion, ticketCount?: number): ZodTypeAny {
     }
     case "date":
       return z
-        .string({
-          required_error: requiredMsg,
-          invalid_type_error: requiredMsg,
-        })
+        .string({ error: requiredMsg })
         .regex(/^\d{4}-\d{2}-\d{2}$/, msg ?? "Fecha inválida")
     case "datetime":
       return z
-        .string({
-          required_error: requiredMsg,
-          invalid_type_error: requiredMsg,
-        })
+        .string({ error: requiredMsg })
         .regex(
           /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/,
           msg ?? "Fecha y hora inválidas",
         )
     case "time":
       return z
-        .string({
-          required_error: requiredMsg,
-          invalid_type_error: requiredMsg,
-        })
+        .string({ error: requiredMsg })
         .regex(/^\d{2}:\d{2}(:\d{2})?$/, msg ?? "Hora inválida")
     case "scale": {
       const min = q.scale?.min ?? 1
       const max = q.scale?.max ?? 5
       return z
-        .number({
-          required_error: requiredMsg,
-          invalid_type_error: requiredMsg,
-        })
+        .number({ error: requiredMsg })
         .int(msg ?? "Debe ser un número entero")
         .min(min, msg ?? `Mínimo ${min}`)
         .max(max, msg ?? `Máximo ${max}`)
@@ -220,7 +190,7 @@ function baseSchemaForType(q: FormQuestion, ticketCount?: number): ZodTypeAny {
       const mustAccept = q.consent?.mustAccept ?? true
       if (mustAccept) {
         return z.literal(true, {
-          errorMap: () => ({ message: msg ?? "Debés aceptar para continuar" }),
+          error: msg ?? "Debés aceptar para continuar",
         })
       }
       return z.boolean()
@@ -245,7 +215,7 @@ function baseSchemaForType(q: FormQuestion, ticketCount?: number): ZodTypeAny {
           snapshot: z.object({
             title: z.string(),
             variantTitle: z.string().nullable(),
-            options: z.record(z.string()).nullable(),
+            options: z.record(z.string(), z.string()).nullable(),
             sku: z.string().nullable(),
             price: z.number().nullable(),
             currency: z.string().nullable(),
@@ -260,10 +230,7 @@ function baseSchemaForType(q: FormQuestion, ticketCount?: number): ZodTypeAny {
       // llevar varias tallas o varias unidades de una misma talla hasta sumar max.
       // La salvaguarda anti-abuso global se reaplica en la derivación (sección 9.8).
       return z
-        .array(pick, {
-          required_error: requiredMsg,
-          invalid_type_error: requiredMsg,
-        })
+        .array(pick, { error: requiredMsg })
         .superRefine((arr, ctx) => {
           // Cada línea debe ser una combinación producto+variante única; dos
           // líneas iguales colisionarían en el uuid determinístico (su unitIndex
