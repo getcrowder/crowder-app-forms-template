@@ -165,8 +165,13 @@ export async function updateFormThemeAction(
   return { ok: true }
 }
 
+type FlatZodError = {
+  formErrors: string[]
+  fieldErrors: Record<string, string[] | undefined>
+}
+
 function firstFieldErrors(err: z.ZodError): Record<string, string> {
-  const { fieldErrors } = err.flatten()
+  const { fieldErrors } = z.flattenError(err) as FlatZodError
   const out: Record<string, string> = {}
   for (const [key, msgs] of Object.entries(fieldErrors)) {
     if (msgs && msgs[0]) out[key] = msgs[0]
@@ -175,7 +180,7 @@ function firstFieldErrors(err: z.ZodError): Record<string, string> {
 }
 
 function firstZodMessage(err: z.ZodError): string {
-  const flat = err.flatten()
+  const flat = z.flattenError(err) as FlatZodError
   return (
     flat.formErrors[0] ??
     Object.values(flat.fieldErrors).flat()[0] ??

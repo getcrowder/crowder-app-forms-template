@@ -280,7 +280,7 @@ export async function uploadProductImage(
 const variantImportSchema = z
   .object({
     id: z.string().optional(),
-    options: z.record(z.string()).optional(),
+    options: z.record(z.string(), z.string()).optional(),
     title: z.string().optional(),
     sku: z.string().nullable().optional(),
     price: z.number().nullable().optional(),
